@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Login Supabase</h1>
+    <input type="email" id="email" value="admin@kontrakanmaps.com">
+    <input type="password" id="password" value="kontrakan123">
+    <button onclick="testLogin()">LOGIN TEST</button>
+    
+    <pre id="hasil"></pre>
+
+<script>
+// LANGSUNG PAKE URL ASLI SUPABASE. LUPAIN PROXY DULU.
+const supabase = supabase.createClient(
+  'https://lchthwuodeptpzqklkcf.supabase.co', 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
+);
+
+async function testLogin() {
+  document.getElementById('hasil').textContent = 'Loading...';
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value,
+  });
+  
+  if (error) {
+    document.getElementById('hasil').textContent = 'ERROR: ' + JSON.stringify(error, null, 2);
+  } else {
+    document.getElementById('hasil').textContent = 'SUKSES LOGIN:\n' + JSON.stringify(data, null, 2);
+  }
+}
+</script>
+</body>
+</html>
