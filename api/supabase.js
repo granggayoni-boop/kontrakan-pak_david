@@ -1,18 +1,23 @@
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   const supabaseUrl = 'https://lchthwuodeptpzqklkcf.supabase.co'
   const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
   
-  const path = req.url.replace('/api/supabase', '')
-  const targetUrl = `${supabaseUrl}${path}`
+  // INI YANG KURANG: Ambil query string ?grant_type=password
+  const pathAndQuery = req.url.replace('/api/supabase', '')
+  const targetUrl = `${supabaseUrl}${pathAndQuery}`
 
-  // WAJIB: Ambil body manual buat POST/PATCH
-  const body = req.method !== 'GET' && req.method !== 'HEAD' 
-    ? await new Promise((resolve) => {
-        let data = ''
-        req.on('data', chunk => data += chunk)
-        req.on('end', () => resolve(data))
-      })
-    : null
+  // Ambil body manual
+  const buffers = []
+  for await (const chunk of req) {
+    buffers.push(chunk)
+  }
+  const body = Buffer.concat(buffers).toString()
 
   const response = await fetch(targetUrl, {
     method: req.method,
@@ -20,11 +25,16 @@ export default async function handler(req, res) {
       'apikey': anonKey,
       'Authorization': `Bearer ${anonKey}`,
       'Content-Type': 'application/json',
-      'Prefer': req.headers['prefer'] || ''
     },
-    body: body
+    body: body || undefined
   })
 
   const data = await response.text()
-  res.status(response.status).setHeader('Content-Type', 'application/json').send(data)
+  
+  // WAJIB: Balikin header CORS biar gak diem
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'apikey, Authorization, Content-Type')
+  
+  res.status(response.status).send(data)
 }
