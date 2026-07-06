@@ -13,7 +13,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
         #admin-map { height: 250px; border-radius: 1rem; z-index: 10; }
-      .scrollbar-hide::-webkit-scrollbar { display: none; }
+     .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="mb-4">
                     <label class="text-sm font-medium text-slate-600">Password</label>
-                    <input type="password" id="password" value="admin123" class="w-full mt-1 p-2.5 border border-slate-300 rounded-lg">
+                    <input type="password" id="password" value="kontrakan123" class="w-full mt-1 p-2.5 border border-slate-300 rounded-lg">
                 </div>
                 <p id="error-msg" class="text-rose-500 text-sm mb-4 text-center h-5"></p>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700">Login</button>
@@ -91,7 +91,6 @@
                             <div class="flex gap-4 pt-4 border-t"><button type="submit" id="submit-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">Simpan Unit</button><button type="button" id="cancel-edit-btn" class="hidden w-full bg-slate-200 text-slate-700 py-3 rounded-lg font-bold hover:bg-slate-300">Batal</button></div>
                         </form>
                     </div>
-                </div>
                 <div class="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
                     <h2 class="font-bold text-lg mb-4">Daftar Unit Terdaftar</h2>
                     <div id="property-list" class="space-y-3"></div>
@@ -101,79 +100,82 @@
     </div>
 
 <script>
-// GANTI PAKE ANON KEY BENERAN DARI SUPABASE > SETTINGS > API
-// HAPUS YANG INI
-// const SUPABASE_URL = 'https://lchthwuodeptpzqklkcf.supabase.co';
-// const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; 
-// const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // 1. INISIALISASI SUPABASE - BENER
+  const SUPABASE_URL = '/api/supabase'
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-// PAKE YANG INI AJA. 1x AJA.
-const SUPABASE_URL = '/api/supabase'  // INI KUNCINYA. PAKE PROXY VERCEL.
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
+  // 2. VARIABEL ELEMENT
+  const loginScreen = document.getElementById('login-screen');
+  const dashboardScreen = document.getElementById('dashboard-screen');
+  const loginForm = document.getElementById('login-form');
+  const logoutBtn = document.getElementById('logout-btn');
+  const errorMsg = document.getElementById('error-msg');
+  const statusEl = document.getElementById('connection-status');
+  let adminMap, adminMarker, selectedUser = null;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: {
-    params: {
-      eventsPerSecond: 0  // MATIIN WEBSOCKET
+  // 3. FUNGSI LOGIN
+  async function handleLogin() {
+    errorMsg.textContent = '';
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+
+    if (error) {
+      console.log('Login Error:', error)
+      errorMsg.textContent = error.message;
+    } else {
+      console.log('Login Sukses:', data)
+      sessionStorage.setItem('isAdminLoggedIn', 'true');
+      showDashboard();
     }
-  },
-  auth: {
-    persistSession: false
   }
-})
 
-// GANTI SEMUA 'db' JADI 'supabase' DI KODE LU YANG LAIN
-// Contoh: db.from('users') -> supabase.from('users')
-
-const loginScreen = document.getElementById('login-screen');
-const dashboardScreen = document.getElementById('dashboard-screen');
-const loginForm = document.getElementById('login-form');
-const logoutBtn = document.getElementById('logout-btn');
-const errorMsg = document.getElementById('error-msg');
-const statusEl = document.getElementById('connection-status');
-
-let adminMap, adminMarker, selectedUser = null;
-
-// CEK KONEKSI SUPABASE
-async function checkConnection() {
-    try {
-        const { error } = await db.from('chats').select('id').limit(1);
-        if (error) throw error;
-        statusEl.textContent = 'Connected';
-        statusEl.className = 'text-xs font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-700';
-    } catch (err) {
-        statusEl.textContent = 'Error: ' + err.message;
-        statusEl.className = 'text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-100 text-rose-700';
-        console.error('Supabase connection error:', err);
-    }
-}
-
-loginForm.addEventListener('submit', e => {
+  // 4. EVENT LISTENER LOGIN
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (document.getElementById('email').value === 'admin@kontrakanmaps.com' && document.getElementById('password').value === 'admin123') {
-        sessionStorage.setItem('isAdminLoggedIn', 'true');
-        showDashboard();
-    } else { errorMsg.textContent = 'Email atau password salah!'; }
-});
+    await handleLogin();
+  });
 
-logoutBtn.addEventListener('click', () => {
+  // 5. LOGOUT
+  logoutBtn.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
     sessionStorage.removeItem('isAdminLoggedIn');
     location.reload();
-});
+  });
 
-async function showDashboard() {
+  // 6. DASHBOARD
+  async function showDashboard() {
     loginScreen.classList.add('hidden');
     dashboardScreen.classList.remove('hidden');
     await checkConnection();
     initAdminMap();
     loadProperties();
     loadUsersForChat();
-}
+  }
 
-if (sessionStorage.getItem('isAdminLoggedIn') === 'true') showDashboard();
+  // 7. CEK KONEKSI
+  async function checkConnection() {
+    try {
+        const { error } = await supabaseClient.from('chats').select('id').limit(1);
+        if (error) throw error;
+        statusEl.textContent = 'Connected';
+        statusEl.className = 'text-xs font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-700';
+    } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.className = 'text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-100 text-rose-700';
+    }
+  }
 
-// ========== MAP ADMIN ==========
-function initAdminMap() {
+  // 8. AUTO LOGIN KALO UDAH PERNAH
+  if (sessionStorage.getItem('isAdminLoggedIn') === 'true') showDashboard();
+
+  // 9. MAP
+  function initAdminMap() {
     if (adminMap) return;
     adminMap = L.map('admin-map').setView([-6.322, 107.299], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
@@ -183,11 +185,11 @@ function initAdminMap() {
         if (adminMarker) adminMap.removeLayer(adminMarker);
         adminMarker = L.marker(e.latlng).addTo(adminMap);
     });
-}
+  }
 
-// ========== FORM PROPERTI ==========
-const propertyForm = document.getElementById('property-form');
-propertyForm.addEventListener('submit', async e => {
+  // 10. SEMUA FUNGSI LAIN PAKE 'supabaseClient' BUKAN 'db'
+  const propertyForm = document.getElementById('property-form');
+  propertyForm.addEventListener('submit', async e => {
     e.preventDefault();
     const submitBtn = document.getElementById('submit-btn');
     submitBtn.disabled = true; submitBtn.textContent = 'Menyimpan...';
@@ -199,9 +201,9 @@ propertyForm.addEventListener('submit', async e => {
     if (imageFiles.length > 0) {
         for (const file of imageFiles) {
             const filePath = `public/${Date.now()}-${file.name}`;
-            const { error: uploadError } = await db.storage.from('kontrakan-images').upload(filePath, file);
+            const { error: uploadError } = await supabaseClient.storage.from('kontrakan-images').upload(filePath, file);
             if (uploadError) { alert('Error upload gambar: ' + uploadError.message); submitBtn.disabled = false; submitBtn.textContent = 'Simpan Unit'; return; }
-            const { data } = db.storage.from('kontrakan-images').getPublicUrl(filePath);
+            const { data } = supabaseClient.storage.from('kontrakan-images').getPublicUrl(filePath);
             imageUrls.push(data.publicUrl);
         }
     }
@@ -218,23 +220,23 @@ propertyForm.addEventListener('submit', async e => {
         images: imageUrls.length > 0? imageUrls : undefined
     };
 
-    const { error } = id? await db.from('properties').update(propertyData).eq('id', id) : await db.from('properties').insert([propertyData]);
+    const { error } = id? await supabaseClient.from('properties').update(propertyData).eq('id', id) : await supabaseClient.from('properties').insert([propertyData]);
     if (error) { alert('Gagal menyimpan: ' + error.message); } else { resetForm(); loadProperties(); }
     submitBtn.disabled = false; submitBtn.textContent = 'Simpan Unit';
-});
+  });
 
-function resetForm() {
+  function resetForm() {
     propertyForm.reset();
     document.getElementById('property-id').value = '';
     document.getElementById('image-preview').innerHTML = '';
     document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-plus-circle text-indigo-500"></i> Tambah Unit Kontrakan Baru';
     document.getElementById('cancel-edit-btn').classList.add('hidden');
     if (adminMarker) adminMap.removeLayer(adminMarker);
-}
-document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+  }
+  document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 
-async function loadProperties() {
-    const { data, error } = await db.from('properties').select('*').order('id', { ascending: false });
+  async function loadProperties() {
+    const { data, error } = await supabaseClient.from('properties').select('*').order('id', { ascending: false });
     const listContainer = document.getElementById('property-list');
     listContainer.innerHTML = '';
     if (error) { listContainer.innerHTML = `<p class="text-rose-500">Gagal memuat: ${error.message}</p>`; return; }
@@ -252,10 +254,10 @@ async function loadProperties() {
         </div>`;
         listContainer.innerHTML += item;
     });
-}
+  }
 
-async function editProperty(id) {
-    const { data } = await db.from('properties').select('*').eq('id', id).single();
+  async function editProperty(id) {
+    const { data } = await supabaseClient.from('properties').select('*').eq('id', id).single();
     document.getElementById('property-id').value = data.id;
     document.getElementById('name').value = data.name;
     document.getElementById('price').value = data.price;
@@ -271,54 +273,43 @@ async function editProperty(id) {
     adminMarker = L.marker([data.lat, data.lng]).addTo(adminMap);
     adminMap.setView([data.lat, data.lng], 15);
     window.scrollTo(0, 0);
-}
+  }
 
-async function deleteProperty(id) {
+  async function deleteProperty(id) {
     if (confirm('Yakin hapus unit ini?')) {
-        await db.from('properties').delete().eq('id', id);
+        await supabaseClient.from('properties').delete().eq('id', id);
         loadProperties();
     }
-}
+  }
 
-// ========== CHAT ADMIN - VERSI BENER ==========
-async function loadUsersForChat() {
-    console.log('Loading users...');
-    const { data, error } = await db.from('chats').select('sender').neq('sender', 'admin');
-    
-    if (error) { 
-        console.error('Error load users:', error.message); 
-        document.getElementById('user-list').innerHTML = `<p class="p-2 text-xs text-rose-500">Error: ${error.message}</p>`;
-        return; 
-    }
-    
-    console.log('Users data:', data);
+  // 11. CHAT
+  async function loadUsersForChat() {
+    const { data, error } = await supabaseClient.from('chats').select('sender').neq('sender', 'admin');
+    if (error) { document.getElementById('user-list').innerHTML = `<p class="p-2 text-xs text-rose-500">Error: ${error.message}</p>`; return; }
     const users = [...new Set(data.map(item => item.sender))];
     const userListContainer = document.getElementById('user-list');
-    
     if (users.length === 0) {
         userListContainer.innerHTML = '<p class="p-2 text-xs text-slate-400 text-center">Belum ada user chat</p>';
         return;
     }
-    
     userListContainer.innerHTML = users.map(user => `
         <div onclick="selectUser('${user}')" class="p-2 text-sm cursor-pointer hover:bg-indigo-100 rounded-md ${selectedUser === user? 'bg-indigo-100 font-semibold' : ''}">
             <i class="fa-solid fa-user mr-2 text-xs"></i>${user}
         </div>
     `).join('');
-}
+  }
 
-function selectUser(username) {
+  function selectUser(username) {
     selectedUser = username;
     document.getElementById('chat-with-user').innerText = username;
     loadAdminMessages();
-    loadUsersForChat(); // refresh highlight
-}
+    loadUsersForChat();
+  }
 
-async function loadAdminMessages() {
+  async function loadAdminMessages() {
     if (!selectedUser) return;
-    const { data, error } = await db.from('chats').select('*').or(`sender.eq.${selectedUser},sender.eq.admin`).order('created_at', { ascending: true });
-    if (error) { console.error('Error load messages:', error); return; }
-    
+    const { data, error } = await supabaseClient.from('chats').select('*').or(`sender.eq.${selectedUser},sender.eq.admin`).order('created_at', { ascending: true });
+    if (error) return;
     const container = document.getElementById('admin-chat-messages');
     container.innerHTML = (data || []).map(m => {
         const isAdmin = m.sender === 'admin';
@@ -330,19 +321,19 @@ async function loadAdminMessages() {
         </div>`;
     }).join('');
     container.scrollTop = container.scrollHeight;
-}
+  }
 
-async function adminKirimPesan() {
+  async function adminKirimPesan() {
     const input = document.getElementById('admin-chat-input');
     if (!input.value.trim() ||!selectedUser) return;
-    const { error } = await db.from('chats').insert([{ message: input.value, sender: 'admin' }]);
+    const { error } = await supabaseClient.from('chats').insert([{ message: input.value, sender: 'admin' }]);
     if (error) { alert('Gagal kirim: ' + error.message); return; }
     input.value = '';
-}
+  }
 
-async function bersihkanChat() {
+  async function bersihkanChat() {
     if (confirm('Yakin mau hapus SEMUA history chat? Nggak bisa dibalikin!')) {
-        const { error } = await db.from('chats').delete().neq('id', 0);
+        const { error } = await supabaseClient.from('chats').delete().neq('id', 0);
         if (error) { alert('Gagal hapus: ' + error.message); return; }
         loadUsersForChat();
         document.getElementById('admin-chat-messages').innerHTML = '';
@@ -350,20 +341,19 @@ async function bersihkanChat() {
         document.getElementById('chat-with-user').innerText = '...';
         alert('Semua chat sudah dibersihkan.');
     }
-}
+  }
 
-// Realtime untuk admin
-db.channel('admin-chats')
- .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
-    console.log('Realtime event:', payload);
-    loadUsersForChat();
-    if (selectedUser && (payload.new.sender === selectedUser || payload.new.sender === 'admin')) {
-        loadAdminMessages();
-    }
-  })
- .subscribe();
+  // 12. REALTIME
+  supabaseClient.channel('admin-chats')
+   .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
+      loadUsersForChat();
+      if (selectedUser && (payload.new.sender === selectedUser || payload.new.sender === 'admin')) {
+          loadAdminMessages();
+      }
+    })
+   .subscribe();
 
-document.getElementById('admin-chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') adminKirimPesan(); });
+  document.getElementById('admin-chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') adminKirimPesan(); });
 </script>
 </body>
 </html>
