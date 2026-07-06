@@ -1,37 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Test Login - Final Boss</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <h1>Test Login Supabase</h1>
-    <input type="email" id="email" value="admin@kontrakanmaps.com">
-    <input type="password" id="password" value="kontrakan123">
-    <button onclick="testLogin()">LOGIN TEST</button>
+  <h1>Test Login Kontrakan Pak David</h1>
+  
+  <input type="email" id="email" placeholder="admin@test.com" value="admin@test.com"><br><br>
+  <input type="password" id="password" placeholder="password" value="admin123"><br><br>
+  <button onclick="handleLogin()">Login</button>
+  
+  <p id="status">Siap tempur...</p>
+
+  <script>
+    const SUPABASE_URL = 'https://lchthwuodeptpzqklkcf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_ZgraWq9_s9uU5CRYio27Rg_SOtUVUBn';
     
-    <pre id="hasil"></pre>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<script>
-// LANGSUNG PAKE URL ASLI SUPABASE. LUPAIN PROXY DULU.
-const supabase = supabase.createClient(
-  'https://lchthwuodeptpzqklkcf.supabase.co', 
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
-);
+    async function handleLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const status = document.getElementById('status');
+      
+      status.innerText = 'Loading...';
+      
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
 
-async function testLogin() {
-  document.getElementById('hasil').textContent = 'Loading...';
-  
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value,
-  });
-  
-  if (error) {
-    document.getElementById('hasil').textContent = 'ERROR: ' + JSON.stringify(error, null, 2);
-  } else {
-    document.getElementById('hasil').textContent = 'SUKSES LOGIN:\n' + JSON.stringify(data, null, 2);
-  }
-}
-</script>
+      if (error) {
+        status.innerText = 'GAGAL: ' + error.message;
+        console.error(error);
+      } else {
+        status.innerText = 'SUKSES LOGIN! User: ' + data.user.email;
+        console.log('Data:', data);
+      }
+    }
+  </script>
 </body>
 </html>
