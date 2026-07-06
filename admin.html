@@ -102,9 +102,28 @@
 
 <script>
 // GANTI PAKE ANON KEY BENERAN DARI SUPABASE > SETTINGS > API
-const SUPABASE_URL = '/api/supabase'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'; // GANTI INI!
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// HAPUS YANG INI
+// const SUPABASE_URL = 'https://lchthwuodeptpzqklkcf.supabase.co';
+// const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; 
+// const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// PAKE YANG INI AJA. 1x AJA.
+const SUPABASE_URL = '/api/supabase'  // INI KUNCINYA. PAKE PROXY VERCEL.
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdGh3dHVvZGVwdHBxemtsa2NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxODUxMTAsImV4cCI6MjA5ODc2MTExMH0.w6MutIfAYQ_HSLJ-kg_HwckXGfP9Wb5XSaSQEFZ2Cwk'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  realtime: {
+    params: {
+      eventsPerSecond: 0  // MATIIN WEBSOCKET
+    }
+  },
+  auth: {
+    persistSession: false
+  }
+})
+
+// GANTI SEMUA 'db' JADI 'supabase' DI KODE LU YANG LAIN
+// Contoh: db.from('users') -> supabase.from('users')
 
 const loginScreen = document.getElementById('login-screen');
 const dashboardScreen = document.getElementById('dashboard-screen');
