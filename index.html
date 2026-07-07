@@ -9,9 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-      .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      .animate-zoom-in { animation: zoomIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .animate-zoom-in { animation: zoomIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .chat-msg { animation: fadeIn 0.2s ease-out; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 antialiased font-sans">
@@ -64,30 +67,55 @@
             </form>
         </div>
 
-        <!-- PUSAT BANTUAN - TANYA ADMIN LANGSUNG -->
+        <!-- PUSAT BANTUAN - LIVE CHAT REALTIME -->
         <div id="pusat-bantuan" class="bg-gradient-to-br from-indigo-50 to-white border border-indigo-200 rounded-2xl p-6 shadow-sm max-w-md mx-auto">
             <div class="mb-4 text-center">
                 <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white mx-auto mb-3">
                     <i class="fa-solid fa-headset text-xl"></i>
                 </div>
-                <h2 class="text-base font-bold text-slate-900">Butuh Bantuan?</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Tanya langsung ke admin. Kami balas secepatnya.</p>
+                <h2 class="text-base font-bold text-slate-900">Live Chat Admin</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Realtime. Riwayat tersimpan otomatis.</p>
             </div>
-            <form id="help-form" class="space-y-3">
-                <div>
-                    <input type="text" id="help-name" required placeholder="Nama Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+            <!-- STEP 1: ISI USERNAME DOANG -->
+            <div id="chat-identity-form">
+                <form id="chat-start-form" class="space-y-3">
+                    <div>
+                        <input type="text" id="chat-username" required placeholder="Masukkan nama/username Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all shadow-sm text-xs">
+                        <i class="fa-solid fa-comments mr-2"></i>Mulai Chat
+                    </button>
+                </form>
+            </div>
+
+            <!-- STEP 2: BOX CHAT REALTIME -->
+            <div id="chat-box" class="hidden">
+                <div class="bg-white rounded-xl border border-slate-200 mb-3">
+                    <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xs">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-900" id="chat-user-display"></p>
+                                <p class="text- text-emerald-600 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>Online</p>
+                            </div>
+                        </div>
+                        <button onclick="resetChatIdentity()" class="text- text-slate-400 hover:text-rose-600" title="Ganti Username">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                    <div id="chat-messages" class="h-64 overflow-y-auto p-3 space-y-3 scrollbar-hide bg-slate-50"></div>
                 </div>
-                <div>
-                    <input type="tel" id="help-phone" required placeholder="No. WhatsApp: 0812xxx" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Ketik pesan..." class="flex-1 bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="kirimChatUser()" id="chat-send-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-xl text-xs font-bold">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
                 </div>
-                <div>
-                    <textarea id="help-message" required rows="3" placeholder="Tulis pertanyaan/kendala Anda..." class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                </div>
-                <button type="submit" id="help-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs">
-                    <i class="fa-solid fa-paper-plane"></i> Kirim Pertanyaan
-                </button>
-                <p id="help-status" class="text-xs text-center h-4"></p>
-            </form>
+                <p id="chat-status" class="text-xs text-center h-4 mt-2"></p>
+            </div>
         </div>
     </main>
 
@@ -112,7 +140,6 @@
                         <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line" id="modal-desc"></p>
                     </div>
                 </div>
-            </div>
             <div class="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
                 <button id="modal-btn-booking" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-xs transition-all shadow-sm">Pesan Sewa Properti Ini Sekarang</button>
             </div>
@@ -127,7 +154,7 @@
             </button>
         </div>
 
-        <button onclick="window.navigateLightbox(-1, event)" class="absolute left-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white w-12 h-12 rounded-full flex items-center justify-center border border-white/10 z-[10002] transition-all cursor-pointer">
+        <button onclick="window.navigateLightbox(-1, event)" class="absolute left-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white w-12 h-12 rounded-full flex items-center justify-center border-white/10 z-[10002] transition-all cursor-pointer">
             <i class="fa-solid fa-chevron-left text-base"></i>
         </button>
 
@@ -142,7 +169,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. UDAH DIBENERIN URL-NYA - LCHTH BUKAN LCTHW
+        // 1. GANTI URL SUPABASE LU YANG BENER DI SINI
         const SUPABASE_URL = "https://lcthwtuodeptpqzklkcf.supabase.co";
         const SUPABASE_KEY = "sb_publishable_ZgraWq9_s9uU5CRYio27Rg_SOtUVUBn";
         const NOMOR_WA_PEMILIK = "6281381767806";
@@ -157,8 +184,115 @@
         let touchStartX = 0;
         let touchEndX = 0;
         let isLightboxOpen = false;
+        let currentChatUser = null;
+        let chatChannel = null;
 
         const DEFAULT_IMG = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80";
+
+        // === CHAT SYSTEM REALTIME ===
+        function initChat() {
+            const savedUser = localStorage.getItem('km_chat_username');
+            if (savedUser) {
+                currentChatUser = savedUser;
+                showChatBox();
+                loadChatMessages();
+                subscribeToChat();
+            }
+        }
+
+        document.getElementById('chat-start-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('chat-username').value.trim();
+            if (!username) return;
+
+            currentChatUser = username;
+            localStorage.setItem('km_chat_username', currentChatUser);
+            showChatBox();
+            loadChatMessages();
+            subscribeToChat();
+            kirimChatUser(`Halo, saya ${username}. Ada yang mau saya tanyakan.`, true);
+        });
+
+        function showChatBox() {
+            document.getElementById('chat-identity-form').classList.add('hidden');
+            document.getElementById('chat-box').classList.remove('hidden');
+            document.getElementById('chat-user-display').innerText = currentChatUser;
+        }
+
+        function resetChatIdentity() {
+            if (confirm('Ganti username? Riwayat chat lama tetap ada di admin.')) {
+                if (chatChannel) supabaseClient.removeChannel(chatChannel);
+                localStorage.removeItem('km_chat_username');
+                currentChatUser = null;
+                document.getElementById('chat-identity-form').classList.remove('hidden');
+                document.getElementById('chat-box').classList.add('hidden');
+                document.getElementById('chat-start-form').reset();
+            }
+        }
+
+        async function loadChatMessages() {
+            if (!currentChatUser) return;
+            const { data, error } = await supabaseClient.from('chats').select('*')
+          .or(`sender.eq.${currentChatUser},sender.eq.admin`)
+          .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error('Gagal load chat:', error);
+                return;
+            }
+
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = (data || []).map(m => {
+                const isUser = m.sender!== 'admin';
+                const messageText = m.message.replace('[PUSAT BANTUAN] ', '');
+                const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                return `<div class="flex ${isUser? 'justify-end' : 'justify-start'} chat-msg">
+                    <div class="max-w- p-2 rounded-lg text-xs ${isUser? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}">
+                        <p>${messageText}</p>
+                        <p class="text- mt-1 ${isUser? 'text-indigo-200' : 'text-slate-400'} text-right">${time}</p>
+                    </div>
+                </div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function kirimChatUser(pesanManual = null, isAuto = false) {
+            const input = document.getElementById('chat-input');
+            const pesan = pesanManual || input.value.trim();
+            if (!pesan ||!currentChatUser) return;
+
+            if (!isAuto) input.value = '';
+
+            const { error } = await supabaseClient.from('chats').insert([{
+                message: isAuto? `[PUSAT BANTUAN] ${pesan}` : pesan,
+                sender: currentChatUser
+            }]);
+
+            if (error &&!isAuto) {
+                document.getElementById('chat-status').textContent = 'Gagal kirim';
+                document.getElementById('chat-status').className = 'text-xs text-center h-4 mt-2 text-rose-600';
+                setTimeout(() => { document.getElementById('chat-status').textContent = ''; }, 3000);
+            }
+        }
+
+        function subscribeToChat() {
+            if (!currentChatUser) return;
+            if (chatChannel) supabaseClient.removeChannel(chatChannel);
+
+            chatChannel = supabaseClient.channel(`user-chat-${currentChatUser}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
+                    if (payload.new.sender === currentChatUser || payload.new.sender === 'admin') {
+                        loadChatMessages();
+                    }
+                })
+          .subscribe();
+        }
+
+        document.getElementById('chat-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') kirimChatUser();
+        });
+
+        // === END CHAT SYSTEM ===
 
         async function muatDataKontrakan() {
             try {
@@ -203,7 +337,7 @@
                 }
                 if (markerGroup) {
                     L.marker([PERMANENT_LAT, PERMANENT_LNG]).addTo(markerGroup)
-                   .bindPopup(`<b>Lokasi Kontrakan Utama</b><br>Karawang`);
+              .bindPopup(`<b>Lokasi Kontrakan Utama</b><br>Karawang`);
                 }
                 return;
             }
@@ -215,10 +349,10 @@
             dataKontrakan.forEach(unit => {
                 if (markerGroup && unit.lat && unit.lng) {
                     L.marker([unit.lat, unit.lng]).addTo(markerGroup)
-                   .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
+              .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
                 } else if (markerGroup) {
                     L.marker([PERMANENT_LAT, PERMANENT_LNG]).addTo(markerGroup)
-                   .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
+              .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
                 }
 
                 const coverImg = (unit.images && unit.images.length > 0)? unit.images[0] : DEFAULT_IMG;
@@ -351,44 +485,10 @@
             window.open(`https://api.whatsapp.com/send?phone=${NOMOR_WA_PEMILIK}&text=${encodeURIComponent(teksWA)}`, '_blank');
         });
 
-        // FITUR PUSAT BANTUAN - KIRIM KE ADMIN
-        document.getElementById('help-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('help-btn');
-            const status = document.getElementById('help-status');
-
-            const nama = document.getElementById('help-name').value.trim();
-            const hp = document.getElementById('help-phone').value.trim();
-            const pesan = document.getElementById('help-message').value.trim();
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-            status.textContent = '';
-
-            const senderId = `${nama} - ${hp}`;
-            const fullMessage = `[PUSAT BANTUAN] ${pesan}`;
-
-            const { error } = await supabaseClient.from('chats').insert([{
-                message: fullMessage,
-                sender: senderId
-            }]);
-
-            if (error) {
-                status.textContent = 'Gagal kirim. Coba lagi.';
-                status.className = 'text-xs text-center h-4 text-rose-600';
-            } else {
-                status.textContent = 'Terkirim! Admin akan balas via WA/Chat.';
-                status.className = 'text-xs text-center h-4 text-emerald-600';
-                document.getElementById('help-form').reset();
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Pertanyaan';
-
-            setTimeout(() => { status.textContent = ''; }, 4000);
+        document.addEventListener('DOMContentLoaded', () => {
+            muatDataKontrakan();
+            initChat();
         });
-
-        document.addEventListener('DOMContentLoaded', muatDataKontrakan);
     </script>
 </body>
 </html>

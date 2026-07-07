@@ -13,10 +13,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
         #admin-map { height: 250px; border-radius: 1rem; z-index: 10; }
-       .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    .notif-toast { animation: slideIn 0.3s ease-out; }
+    .notif-toast.hide { animation: slideOut 0.3s ease-out; }
+     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-msg { animation: fadeIn 0.2s ease-out; }
     </style>
 </head>
 <body>
+    <!-- AUDIO NOTIF -->
+    <audio id="notif-sound" preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749d484.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
     <div id="login-screen" class="min-h-screen flex items-center justify-center bg-slate-100">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
             <h1 class="text-2xl font-bold text-center mb-1">Admin Panel</h1>
@@ -56,7 +70,10 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-8">
                     <div class="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
-                        <h2 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-comments text-indigo-500"></i> Pusat Bantuan - Balas Chat User</h2>
+                        <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-indigo-500"></i> Pusat Bantuan - Balas Chat User
+                            <span id="unread-badge" class="hidden bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">Baru</span>
+                        </h2>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="md:col-span-1">
                                 <label class="text-sm font-semibold">Pilih Penyewa:</label>
@@ -103,7 +120,7 @@
     </div>
 
 <script>
-  // 1. INISIALISASI SUPABASE - UDAH BENER URL-NYA
+  // 1. GANTI URL SUPABASE LU YANG BENER DI SINI
   const SUPABASE_URL = 'https://lcthwtuodeptpqzklkcf.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_ZgraWq9_s9uU5CRYio27Rg_SOtUVUBn';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -117,7 +134,12 @@
   const statusEl = document.getElementById('connection-status');
   const userEmailEl = document.getElementById('user-email');
   const loginBtn = document.getElementById('login-btn');
+  const toastContainer = document.getElementById('toast-container');
+  const notifSound = document.getElementById('notif-sound');
+  const unreadBadge = document.getElementById('unread-badge');
   let adminMap, adminMarker, selectedUser = null;
+  let lastSeenMessageId = 0;
+  let chatChannel = null;
 
   // 3. CEK SESSION PAS BUKA HALAMAN
   checkUserSession();
@@ -144,6 +166,8 @@
     initAdminMap();
     loadProperties();
     loadUsersForChat();
+    initLastSeenMessage();
+    subscribeToAllChats(); // SUBSCRIBE KE SEMUA CHAT
   }
 
   // 4. FUNGSI LOGIN
@@ -172,6 +196,7 @@
 
   // 5. LOGOUT
   logoutBtn.addEventListener('click', async () => {
+    if (chatChannel) supabaseClient.removeChannel(chatChannel);
     await supabaseClient.auth.signOut();
     location.reload();
   });
@@ -320,7 +345,7 @@
     }
   }
 
-  // 9. CHAT
+  // 9. CHAT + NOTIF REALTIME
   async function loadUsersForChat() {
     const { data, error } = await supabaseClient.from('chats').select('sender').neq('sender', 'admin');
     if (error) {
@@ -345,6 +370,7 @@
     document.getElementById('chat-with-user').innerText = username;
     loadAdminMessages();
     loadUsersForChat();
+    hideUnreadBadge();
   }
 
   async function loadAdminMessages() {
@@ -354,10 +380,12 @@
     const container = document.getElementById('admin-chat-messages');
     container.innerHTML = (data || []).map(m => {
         const isAdmin = m.sender === 'admin';
-        return `<div class="flex ${isAdmin? 'justify-end' : 'justify-start'} items-end gap-2 text-xs mb-3">
+        const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        return `<div class="flex ${isAdmin? 'justify-end' : 'justify-start'} items-end gap-2 text-xs mb-3 chat-msg">
             <div class="flex flex-col ${isAdmin? 'items-end' : 'items-start'}">
-                <span class="text-[10px] text-slate-400 mb-1">${isAdmin? 'Admin' : m.sender}</span>
+                <span class="text- text-slate-400 mb-1">${isAdmin? 'Admin' : m.sender}</span>
                 <div class="p-2 rounded-lg ${isAdmin? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-800'} max-w-xs break-words">${m.message}</div>
+                <span class="text- text-slate-400 mt-1">${time}</span>
             </div>
         </div>`;
     }).join('');
@@ -384,21 +412,79 @@
     }
   }
 
-  // 10. REALTIME
-  supabaseClient.channel('admin-chats')
- .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
+  // 10. FUNGSI NOTIF BARU
+  function showNotif(sender, message) {
+    // Play sound
+    notifSound.play().catch(e => console.log('Audio play failed:', e));
+
+    // Show badge
+    unreadBadge.classList.remove('hidden');
+
+    // Show toast
+    const toast = document.createElement('div');
+    toast.className = 'notif-toast bg-white border border-indigo-200 shadow-xl rounded-xl p-4 max-w-sm';
+    toast.innerHTML = `
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                <i class="fa-solid fa-message"></i>
+            </div>
+            <div class="flex-1">
+                <p class="font-bold text-sm text-slate-900">Pesan Baru dari ${sender}</p>
+                <p class="text-xs text-slate-600 mt-1 line-clamp-2">${message}</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `;
+    toastContainer.appendChild(toast);
+
+    // Auto remove after 5 detik
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  }
+
+  function hideUnreadBadge() {
+    unreadBadge.classList.add('hidden');
+  }
+
+  async function initLastSeenMessage() {
+    const { data } = await supabaseClient.from('chats').select('id').order('id', { ascending: false }).limit(1);
+    if (data && data.length > 0) {
+        lastSeenMessageId = data[0].id;
+    }
+  }
+
+  // 11. REALTIME SUBSCRIPTION + NOTIF - INI YANG BIKIN REALTIME
+  function subscribeToAllChats() {
+    if (chatChannel) supabaseClient.removeChannel(chatChannel);
+
+    chatChannel = supabaseClient.channel('admin-chats-realtime')
+ .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
+      const newMsg = payload.new;
+
+      // Kalo bukan dari admin = notif
+      if (newMsg.sender!== 'admin' && newMsg.id > lastSeenMessageId) {
+          showNotif(newMsg.sender, newMsg.message);
+          lastSeenMessageId = newMsg.id;
+      }
+
       loadUsersForChat();
-      if (selectedUser && (payload.new.sender === selectedUser || payload.new.sender === 'admin')) {
+      if (selectedUser && (newMsg.sender === selectedUser || newMsg.sender === 'admin')) {
           loadAdminMessages();
       }
     })
  .subscribe();
+  }
 
   document.getElementById('admin-chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') adminKirimPesan(); });
 
-  // 11. AUTO LOGOUT KALO SESSION EXPIRED
+  // 12. AUTO LOGOUT KALO SESSION EXPIRED
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') {
+        if (chatChannel) supabaseClient.removeChannel(chatChannel);
         location.reload();
     }
   });
