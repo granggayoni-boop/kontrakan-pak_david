@@ -9,17 +9,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .animate-zoom-in { animation: zoomIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+ .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+ .animate-zoom-in { animation: zoomIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
+ .scrollbar-hide::-webkit-scrollbar { display: none; }
    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .chat-msg { animation: fadeIn 0.2s ease-out; }
+ .chat-msg { animation: fadeIn 0.2s ease-out; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900 antialiased font-sans">
 
-    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z- px-6 py-4">
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 px-6 py-4">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h1 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <span class="p-1.5 bg-indigo-600 text-white rounded-lg text-xs"><i class="fa-solid fa-house-chimney"></i></span> KontrakanMaps
@@ -50,15 +50,15 @@
             </div>
             <form id="booking-form-wa" class="space-y-4">
                 <div>
-                    <label class="text- font-semibold text-slate-600 block mb-1">Unit Dipilih</label>
+                    <label class="text-xs font-semibold text-slate-600 block mb-1">Unit Dipilih</label>
                     <input type="text" id="unit-terpilih" readonly placeholder="Silakan pilih tombol sewa kamar di atas" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs font-medium text-indigo-600 focus:outline-none">
                 </div>
                 <div>
-                    <label class="text- font-semibold text-slate-600 block mb-1">Nama Lengkap</label>
-                    <input type="text" id="tenant-name" required placeholder="Masukkan nama Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none">
+                    <label class="text-xs font-semibold text-slate-600 block mb-1">Nama Lengkap</label>
+                    <input type="text" id="tenant-name" required placeholder="Masukkan nama Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="text- font-semibold text-slate-600 block mb-1">Nomor Kontak WhatsApp</label>
+                    <label class="text-xs font-semibold text-slate-600 block mb-1">Nomor Kontak WhatsApp</label>
                     <input type="tel" id="tenant-phone" required placeholder="Contoh: 0812XXXXXXXX" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none">
                 </div>
                 <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs">
@@ -81,12 +81,13 @@
             <div id="chat-identity-form">
                 <form id="chat-start-form" class="space-y-3">
                     <div>
-                        <input type="text" id="chat-username" required placeholder="Masukkan nama/username Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="chat-username" placeholder="Masukkan nama/username Anda" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-all shadow-sm text-xs">
                         <i class="fa-solid fa-comments mr-2"></i>Mulai Chat
                     </button>
                 </form>
+                <p class="text-xs text-center text-slate-400 mt-2">Atau isi "Nama Lengkap" di atas untuk auto chat</p>
             </div>
 
             <!-- STEP 2: BOX CHAT REALTIME -->
@@ -99,10 +100,10 @@
                             </div>
                             <div>
                                 <p class="text-xs font-semibold text-slate-900" id="chat-user-display"></p>
-                                <p class="text- text-emerald-600 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>Online</p>
+                                <p class="text-xs text-emerald-600 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>Online</p>
                             </div>
                         </div>
-                        <button onclick="resetChatIdentity()" class="text- text-slate-400 hover:text-rose-600" title="Ganti Username">
+                        <button onclick="resetChatIdentity()" class="text-xs text-slate-400 hover:text-rose-600" title="Ganti Username">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
                     </div>
@@ -119,15 +120,15 @@
         </div>
     </main>
 
-    <div id="detail-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z- flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-xl rounded-2xl max-h- overflow-y-auto shadow-xl flex flex-col">
+    <div id="detail-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0 rounded-t-2xl z-10">
                 <h3 id="modal-title" class="font-bold text-slate-900 text-sm">Spesifikasi Detail Kamar</h3>
                 <button onclick="window.tutupModal()" class="text-slate-400 hover:text-slate-600 p-1 text-base"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-5 space-y-5">
                 <div>
-                    <span class="text- font-bold text-slate-400 uppercase tracking-wider block mb-2.5">Galeri Foto Properti (Klik untuk perbesar & slide)</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2.5">Galeri Foto Properti (Klik untuk perbesar & slide)</span>
                     <div id="modal-gallery" class="flex flex-col gap-4"></div>
                 </div>
                 <div class="space-y-3 border-t border-slate-100 pt-4">
@@ -154,12 +155,12 @@
             </button>
         </div>
 
-        <button onclick="window.navigateLightbox(-1, event)" class="absolute left-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white w-12 h-12 rounded-full flex items-center justify-center border-white/10 z-[10002] transition-all cursor-pointer">
+        <button onclick="window.navigateLightbox(-1, event)" class="absolute left-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white w-12 h-12 rounded-full flex items-center justify-center border border-white/10 z-[10002] transition-all cursor-pointer">
             <i class="fa-solid fa-chevron-left text-base"></i>
         </button>
 
         <div class="w-full h-full flex items-center justify-center" id="lightbox-touch-zone">
-            <img id="lightbox-img" src="" alt="Foto Fullscreen" class="max-w-full max-h- rounded-xl shadow-2xl object-contain animate-zoom-in" onclick="event.stopPropagation()">
+            <img id="lightbox-img" src="" alt="Foto Fullscreen" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain animate-zoom-in" onclick="event.stopPropagation()">
         </div>
 
         <button onclick="window.navigateLightbox(1, event)" class="absolute right-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white w-12 h-12 rounded-full flex items-center justify-center border border-white/10 z-[10002] transition-all cursor-pointer">
@@ -189,11 +190,31 @@
 
         const DEFAULT_IMG = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80";
 
-        // === CHAT SYSTEM REALTIME ===
+        // === CHAT SYSTEM REALTIME - FIXED ===
         function initChat() {
+            // Auto sync nama dari input "Nama Lengkap"
+            const namaInput = document.getElementById('tenant-name');
+            if (namaInput) {
+                namaInput.addEventListener('input', function() {
+                    const nama = this.value.trim();
+                    if (nama &&!document.getElementById('chat-box').classList.contains('hidden')) {
+                        return; // udah login chat, biarin
+                    }
+                    if (nama && nama.length > 2) {
+                        currentChatUser = nama;
+                        localStorage.setItem('km_chat_username', currentChatUser);
+                        showChatBox();
+                        loadChatMessages();
+                        subscribeToChat();
+                    }
+                });
+            }
+
             const savedUser = localStorage.getItem('km_chat_username');
             if (savedUser) {
                 currentChatUser = savedUser;
+                document.getElementById('tenant-name').value = savedUser;
+                document.getElementById('chat-username').value = savedUser;
                 showChatBox();
                 loadChatMessages();
                 subscribeToChat();
@@ -202,15 +223,24 @@
 
         document.getElementById('chat-start-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            const username = document.getElementById('chat-username').value.trim();
-            if (!username) return;
+            let username = document.getElementById('chat-username').value.trim();
+
+            // Kalo kosong, ambil dari Nama Lengkap
+            if (!username) {
+                username = document.getElementById('tenant-name').value.trim();
+            }
+
+            // Kalo masih kosong, bikin random
+            if (!username) {
+                username = 'User-' + Math.floor(Math.random() * 9999);
+            }
 
             currentChatUser = username;
             localStorage.setItem('km_chat_username', currentChatUser);
+            document.getElementById('tenant-name').value = username;
             showChatBox();
             loadChatMessages();
             subscribeToChat();
-            kirimChatUser(`Halo, saya ${username}. Ada yang mau saya tanyakan.`, true);
         });
 
         function showChatBox() {
@@ -231,57 +261,98 @@
         }
 
         async function loadChatMessages() {
-    if (!currentChatUser) return;
-    const { data, error } = await supabaseClient.from('chats').select('*')
-  .or(`sender.eq.${currentChatUser},sender.eq.admin`)
-  .order('created_at', { ascending: true });
+            if (!currentChatUser) return;
+            const { data, error } = await supabaseClient.from('chats').select('*')
+               .or(`sender.eq.${currentChatUser},sender.eq.admin`)
+               .order('created_at', { ascending: true });
 
-    if (error) {
-        console.error('Gagal load chat:', error);
-        return;
-    }
+            if (error) {
+                console.error('Gagal load chat:', error);
+                return;
+            }
 
-    const container = document.getElementById('chat-messages');
-    container.innerHTML = (data || []).map(m => {
-        const isUser = m.sender!== 'admin';
-        const messageText = m.message.replace('[PUSAT BANTUAN] ', '');
-        const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        return `<div class="flex ${isUser? 'justify-end' : 'justify-start'} chat-msg group" id="user-msg-${m.id}">
-            <div class="max-w- p-2 rounded-lg text-xs ${isUser? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'} relative">
-                <p>${messageText}</p>
-                <p class="text- mt-1 ${isUser? 'text-indigo-200' : 'text-slate-400'} text-right">${time}</p>
-                ${isUser ? `<button onclick="hapusPesanUser(${m.id})" class="absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full text- opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600" title="Hapus">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>` : ''}
-            </div>
-        </div>`;
-    }).join('');
-    container.scrollTop = container.scrollHeight;
-}
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = (data || []).map(m => {
+                const isUser = m.sender!== 'admin';
+                const messageText = m.message.replace('[PUSAT BANTUAN] ', '');
+                const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                return `<div class="flex ${isUser? 'justify-end' : 'justify-start'} chat-msg group" id="user-msg-${m.id}">
+                    <div class="max-w-[75%] p-2 rounded-lg text-xs ${isUser? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'} relative">
+                        <p>${messageText}</p>
+                        <p class="text-[10px] mt-1 ${isUser? 'text-indigo-200' : 'text-slate-400'} text-right">${time}</p>
+                        ${isUser? `<button onclick="hapusPesanUser(${m.id})" class="absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600" title="Hapus">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
 
-async function hapusPesanUser(id) {
-    if (!confirm('Hapus pesan ini?')) return;
-    const { error } = await supabaseClient.from('chats').delete().eq('id', id);
-    if (error) alert('Gagal hapus: ' + error.message);
-}
+        async function hapusPesanUser(id) {
+            if (!confirm('Hapus pesan ini?')) return;
+            const { error } = await supabaseClient.from('chats').delete().eq('id', id);
+            if (error) alert('Gagal hapus: ' + error.message);
+        }
 
-function subscribeToChat() {
-    if (!currentChatUser) return;
-    if (chatChannel) supabaseClient.removeChannel(chatChannel);
+        function subscribeToChat() {
+            if (!currentChatUser) return;
+            if (chatChannel) supabaseClient.removeChannel(chatChannel);
 
-    chatChannel = supabaseClient.channel(`user-chat-${currentChatUser}`)
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
-            if (payload.new.sender === currentChatUser || payload.new.sender === 'admin') {
+            chatChannel = supabaseClient.channel(`user-chat-${currentChatUser}`)
+               .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
+                    if (payload.new.sender === currentChatUser || payload.new.sender === 'admin') {
+                        loadChatMessages();
+                    }
+                })
+               .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload) => {
+                    const deletedId = payload.old.id;
+                    const el = document.getElementById(`user-msg-${deletedId}`);
+                    if (el) el.remove();
+                })
+               .subscribe();
+        }
+
+        async function kirimChatUser() {
+            const messageInput = document.getElementById('chat-input');
+            const pesan = messageInput.value.trim();
+
+            if (!pesan) return;
+
+            // Auto set username kalo belum ada
+            if (!currentChatUser) {
+                let username = document.getElementById('tenant-name').value.trim();
+                if (!username) {
+                    username = document.getElementById('chat-username').value.trim();
+                }
+                if (!username) {
+                    username = 'User-' + Math.floor(Math.random() * 9999);
+                }
+                currentChatUser = username;
+                localStorage.setItem('km_chat_username', currentChatUser);
+                document.getElementById('tenant-name').value = username;
+                showChatBox();
+                subscribeToChat();
+            }
+
+            document.getElementById('chat-status').innerText = 'Mengirim...';
+
+            const { error } = await supabaseClient.from('chats').insert([{
+                sender: currentChatUser,
+                message: `[PUSAT BANTUAN] ${pesan}`
+            }]);
+
+            if (error) {
+                console.error('Error:', error);
+                document.getElementById('chat-status').innerText = 'Gagal kirim!';
+                setTimeout(() => document.getElementById('chat-status').innerText = '', 2000);
+            } else {
+                messageInput.value = '';
+                document.getElementById('chat-status').innerText = '';
                 loadChatMessages();
             }
-        })
-  .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload) => {
-            const deletedId = payload.old.id;
-            const el = document.getElementById(`user-msg-${deletedId}`);
-            if (el) el.remove();
-        })
-  .subscribe();
-}
+        }
+
         document.getElementById('chat-input').addEventListener('keypress', e => {
             if (e.key === 'Enter') kirimChatUser();
         });
@@ -331,7 +402,7 @@ function subscribeToChat() {
                 }
                 if (markerGroup) {
                     L.marker([PERMANENT_LAT, PERMANENT_LNG]).addTo(markerGroup)
-              .bindPopup(`<b>Lokasi Kontrakan Utama</b><br>Karawang`);
+                       .bindPopup(`<b>Lokasi Kontrakan Utama</b><br>Karawang`);
                 }
                 return;
             }
@@ -343,10 +414,10 @@ function subscribeToChat() {
             dataKontrakan.forEach(unit => {
                 if (markerGroup && unit.lat && unit.lng) {
                     L.marker([unit.lat, unit.lng]).addTo(markerGroup)
-              .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
+                       .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
                 } else if (markerGroup) {
                     L.marker([PERMANENT_LAT, PERMANENT_LNG]).addTo(markerGroup)
-              .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
+                       .bindPopup(`<b>${unit.name}</b><br>Rp ${Number(unit.price).toLocaleString('id-ID')} / bln`);
                 }
 
                 const coverImg = (unit.images && unit.images.length > 0)? unit.images[0] : DEFAULT_IMG;
@@ -357,12 +428,12 @@ function subscribeToChat() {
                         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden text-left hover:shadow-md transition-all">
                             <div class="relative h-48 bg-slate-50 overflow-hidden">
                                 <img src="${coverImg}" class="w-full h-full object-cover">
-                                <span class="absolute top-3 right-3 px-2.5 py-1 text- rounded-full font-bold ${statusColor} border">${unit.status}</span>
+                                <span class="absolute top-3 right-3 px-2.5 py-1 text-xs rounded-full font-bold ${statusColor} border">${unit.status}</span>
                             </div>
                             <div class="p-4 flex-1 flex flex-col justify-between">
                                 <div>
                                     <h3 class="font-bold text-slate-900 text-sm tracking-tight">${unit.name}</h3>
-                                    <p class="text- text-slate-500 font-medium">${unit.category}</p>
+                                    <p class="text-xs text-slate-500 font-medium">${unit.category}</p>
                                     <p class="text-indigo-600 font-bold text-sm mt-2">Rp ${Number(unit.price).toLocaleString('id-ID')} <span class="text-xs text-slate-400 font-normal">/ bln</span></p>
                                     <p class="text-slate-600 text-xs mt-2 mb-4 line-clamp-2">${unit.description || 'Tidak ada deskripsi'}</p>
                                 </div>
@@ -383,7 +454,7 @@ function subscribeToChat() {
 
         window.bukaModalDetail = function(id) {
             const unit = dataKontrakan.find(p => p.id === id);
-            if(!unit) return;
+            if (!unit) return;
 
             document.getElementById('modal-title').innerText = unit.name;
             document.getElementById('modal-category').innerText = `${unit.category} (${unit.status})`;
@@ -451,7 +522,7 @@ function subscribeToChat() {
         });
 
         const touchZone = document.getElementById('lightbox-touch-zone');
-        if(touchZone) {
+        if (touchZone) {
             touchZone.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
             touchZone.addEventListener('touchend', e => {
                 touchEndX = e.changedTouches[0].screenX;
@@ -472,7 +543,7 @@ function subscribeToChat() {
         document.getElementById('booking-form-wa').addEventListener('submit', function(e) {
             e.preventDefault();
             const unit = document.getElementById('unit-terpilih').value;
-            if(!unit) { alert('Pilih unit dulu bang'); return; }
+            if (!unit) { alert('Pilih unit dulu bang'); return; }
             const nama = document.getElementById('tenant-name').value.trim();
             const hp = document.getElementById('tenant-phone').value.trim();
             const teksWA = `Halo Pak David, saya berminat dengan unit:\n\n*Unit:* ${unit}\n*Nama:* ${nama}\n*WhatsApp:* ${hp}\n\nApakah masih ada slot kosong? Terima kasih.`;
