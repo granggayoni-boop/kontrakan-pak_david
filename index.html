@@ -231,63 +231,57 @@
         }
 
         async function loadChatMessages() {
-            if (!currentChatUser) return;
-            const { data, error } = await supabaseClient.from('chats').select('*')
-          .or(`sender.eq.${currentChatUser},sender.eq.admin`)
-          .order('created_at', { ascending: true });
+    if (!currentChatUser) return;
+    const { data, error } = await supabaseClient.from('chats').select('*')
+  .or(`sender.eq.${currentChatUser},sender.eq.admin`)
+  .order('created_at', { ascending: true });
 
-            if (error) {
-                console.error('Gagal load chat:', error);
-                return;
+    if (error) {
+        console.error('Gagal load chat:', error);
+        return;
+    }
+
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = (data || []).map(m => {
+        const isUser = m.sender!== 'admin';
+        const messageText = m.message.replace('[PUSAT BANTUAN] ', '');
+        const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        return `<div class="flex ${isUser? 'justify-end' : 'justify-start'} chat-msg group" id="user-msg-${m.id}">
+            <div class="max-w- p-2 rounded-lg text-xs ${isUser? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'} relative">
+                <p>${messageText}</p>
+                <p class="text- mt-1 ${isUser? 'text-indigo-200' : 'text-slate-400'} text-right">${time}</p>
+                ${isUser ? `<button onclick="hapusPesanUser(${m.id})" class="absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full text- opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600" title="Hapus">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+async function hapusPesanUser(id) {
+    if (!confirm('Hapus pesan ini?')) return;
+    const { error } = await supabaseClient.from('chats').delete().eq('id', id);
+    if (error) alert('Gagal hapus: ' + error.message);
+}
+
+function subscribeToChat() {
+    if (!currentChatUser) return;
+    if (chatChannel) supabaseClient.removeChannel(chatChannel);
+
+    chatChannel = supabaseClient.channel(`user-chat-${currentChatUser}`)
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
+            if (payload.new.sender === currentChatUser || payload.new.sender === 'admin') {
+                loadChatMessages();
             }
-
-            const container = document.getElementById('chat-messages');
-            container.innerHTML = (data || []).map(m => {
-                const isUser = m.sender!== 'admin';
-                const messageText = m.message.replace('[PUSAT BANTUAN] ', '');
-                const time = new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                return `<div class="flex ${isUser? 'justify-end' : 'justify-start'} chat-msg">
-                    <div class="max-w- p-2 rounded-lg text-xs ${isUser? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-800'}">
-                        <p>${messageText}</p>
-                        <p class="text- mt-1 ${isUser? 'text-indigo-200' : 'text-slate-400'} text-right">${time}</p>
-                    </div>
-                </div>`;
-            }).join('');
-            container.scrollTop = container.scrollHeight;
-        }
-
-        async function kirimChatUser(pesanManual = null, isAuto = false) {
-            const input = document.getElementById('chat-input');
-            const pesan = pesanManual || input.value.trim();
-            if (!pesan ||!currentChatUser) return;
-
-            if (!isAuto) input.value = '';
-
-            const { error } = await supabaseClient.from('chats').insert([{
-                message: isAuto? `[PUSAT BANTUAN] ${pesan}` : pesan,
-                sender: currentChatUser
-            }]);
-
-            if (error &&!isAuto) {
-                document.getElementById('chat-status').textContent = 'Gagal kirim';
-                document.getElementById('chat-status').className = 'text-xs text-center h-4 mt-2 text-rose-600';
-                setTimeout(() => { document.getElementById('chat-status').textContent = ''; }, 3000);
-            }
-        }
-
-        function subscribeToChat() {
-            if (!currentChatUser) return;
-            if (chatChannel) supabaseClient.removeChannel(chatChannel);
-
-            chatChannel = supabaseClient.channel(`user-chat-${currentChatUser}`)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, (payload) => {
-                    if (payload.new.sender === currentChatUser || payload.new.sender === 'admin') {
-                        loadChatMessages();
-                    }
-                })
-          .subscribe();
-        }
-
+        })
+  .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload) => {
+            const deletedId = payload.old.id;
+            const el = document.getElementById(`user-msg-${deletedId}`);
+            if (el) el.remove();
+        })
+  .subscribe();
+}
         document.getElementById('chat-input').addEventListener('keypress', e => {
             if (e.key === 'Enter') kirimChatUser();
         });
